@@ -37,7 +37,7 @@ def getModInverse(a, p):
 
 
 def fastPowerSmall(g, A, N):
-    """Returns g^A (mod N) using the algorithm in HW 2 Problem 2(b)."""
+    """Returns g^A (mod N) using a low-space and low-time complexity algorithm."""
 
     # If exponent is negative, replace g with the inverse of g
     if (A < 0):
@@ -114,6 +114,8 @@ def millerRabin(a, n):
 
 
 def probablyPrime(n):
+    """Uses Miller-Rabin Witness test a fixed number of times to probablistically determine whether or not input is prime."""
+
     number_of_checks = 5 # Should be 20
     for i in range(number_of_checks):
         x = ZZ.random_element(2, n-1)
@@ -146,7 +148,7 @@ def findPrime(lowerBound, upperBound):
     
     
 def generateRSAPrimes(b):
-    """Generates two primes of length b bits."""
+    """Generates two b-bit primes."""
 
     p = findPrime(2**b, 2**(b+1)-1)
     q = findPrime(2**b, 2**(b+1)-1)
