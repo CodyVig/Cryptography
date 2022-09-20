@@ -3,66 +3,60 @@ class RSA:
     # for each object.
     def __init__(self, b):
         self.bit_size = b
-        self.primes = self.__generateRSAPrimes(b)
-        self.encryption_exp = self.__generateRSAEncryptionExp(
-            self.primes[0], self.primes[1])
-        self.decryption_exp = self.__generateRSADecryptionExp(
-            self.primes[0], self.primes[1], self.encryption_exp)
+        self.primes = self.__generate_rsa_primes(b)
+        self.encryption_exp = self.__generate_rsa_encryption_exp(self.primes[0], self.primes[1])
+        self.decryption_exp = self.__generate_rsa_decryption_exp(self.primes[0], self.primes[1], 
+                                                              self.encryption_exp)
         
         
     def get_bit_size(self):
+        """Returns the number of bits used to generate primes."""
         return self.bit_size
     
     def get_public_key(self):
+        """Returns [modulus, encryption_exponent] that is used by sender to encrypt messages."""
         return [self.primes[0] * self.primes[1], self.encryption_exp]
     
     def get_private_key(self):
+        """Returns [modulus, decryption_exponent] that is used by you to encrypt messages."""
         return [self.primes[0] * self.primes[1], self.decryption_exp]
-
-    def encrypt(self, message):
+    
+    def encrypt(self, message, keys):
         """
         Encrypts a plaintext message using RSA encryption.
         
         Inputs:
-        --- message : a string you wish to encrypt
+        message --- a string you wish to encrypt for transfer to another party.
+        keys    --- a list containing party's modulus and encryption_exponent.
         
         Output:
-        --- ciphertext = message ** encryption_exponent mod modulus.
+        cipher --- the encrypted message to be given to recipient.
         """
     
-        [N, e] = self.get_public_key()
-        message = self.__textToInt(message)
-    
-        return self.__fastPowerSmall(message, e, N)
-    
+        return self.__fast_power_small(self.__text_to_int(message), keys[1], keys[0])
+
     def decrypt(self, cipher):
         """
         Decrypts a ciphertext message using RSA decryption.
         
         Inputs:
-        --- cipher : encrypted ciphertext.
+        cipher  --- encrypted ciphertext received from sender.
         
         Output:
-        --- message = cipher ** decryption_exponent mod modulus.
+        message --- a string in English.
         """
     
-        [N, d] = self.get_private_key()
-    
-        return self.__intToText(self.__fastPowerSmall(cipher, d, N))
+        return self.__int_to_text(self.__fast_power_small(cipher, 
+                                                          self.get_private_key()[1], 
+                                                          self.get_private_key()[0]))
     
     # The following functions are needed to perform number-theoretic 
     # calculations to encrypt and decrypt.
-    def __divisionWithRemainder(self, a, b):
-        """
-        Long divides a/b to get [q, r] such that a = bq + r
-        """
-        
-        r = a%b
-        q = (a - r)//b
+    def __division_with_remainder(self, a, b):
+        """Long divides a/b to get [q, r] such that a = bq + r"""
+        return [(a - a%b)//b, a%b]
     
-        return [q, r]
-    
-    def __extendedGCD(self, a, b):
+    def __extended_gcd(self, a, b):
         """ 
         Runs extended Euclidean algorithm on inputs (a, b) to find [g, u, v] 
         such that g = gcd(a, b) and au + bv = g. This follows the algorithm 
@@ -72,33 +66,33 @@ class RSA:
         u = 1; g = a; x = 0; y = b
     
         while(y != 0):
-            [q, t] = self.__divisionWithRemainder(g, y)
+            [q, t] = self.__division_with_remainder(g, y)
             s = u - q*x
             u = x; g = y; x = s; y = t
     
         v = (g - a*u) // b
         return [g, u, v]
     
-    def __getModInverse(self, a, p):
+    def __get_mod_inverse(self, a, p):
         """
         Returns the inverse of a mod p.
         """
     
-        [g, u, v] = self.__extendedGCD(a, p)
+        [g, u, v] = self.__extended_gcd(a, p)
     
         if (g != 1):
             raise ValueError("The arguments of getModInverse are not coprime!")
     
         return u % p
 
-    def __fastPowerSmall(self, g, A, N):
+    def __fast_power_small(self, g, A, N):
         """
         Returns g^A (mod N) using a low-space and low-time complexity algorithm.
         """
     
         # If exponent is negative, replace g with the inverse of g
         if (A < 0):
-            g = self.__getModInverse(self, g, N)
+            g = self.__get_mod_inverse(self, g, N)
             A = -A
     
         a = g; b = 1
@@ -111,20 +105,17 @@ class RSA:
     
         return b
     
-    def __textToInt(self, w):
+    def __text_to_int(self, w):
         """
         Takes in a string and outputs an integer satisfying the above equation.
         """
-    
         n = 0
-    
         for i in range(len(w)):
             n += ord(w[i]) * 256**i
-    
         return n
 
 
-    def __intToText(self, n):
+    def __int_to_text(self, n):
         """
         Takes in an integer and returns its corresponding string using the 
         ASCII dictionary without storing the base-256 expansion.
@@ -134,13 +125,13 @@ class RSA:
         x = n; i = 0
     
         while(x != 0):
-            [x, r] = self.__divisionWithRemainder(x, 256)
+            [x, r] = self.__division_with_remainder(x, 256)
             text = text + chr(r)
             if(x == 0):
                 return text
             i += 1
             
-    def __millerRabin(self, a, n):
+    def __miller_rabin(self, a, n):
         """
         If a is a Miller-Rabin witness for n, return true. Else, false.
         """
@@ -155,7 +146,7 @@ class RSA:
             k += 1
             q = q//2
     
-        x = self.__fastPowerSmall(a, q, n)
+        x = self.__fast_power_small(a, q, n)
     
         # Is a^m = 1 mod n? Then a is not a witness
         if (x == 1):
@@ -171,7 +162,7 @@ class RSA:
         # If we've made it here, the number is a witness.
         return True
     
-    def __probablyPrime(self, n):
+    def __probably_prime(self, n):
         """
         Uses Miller-Rabin Witness test a fixed number of times to 
         probablistically determine whether or not input is prime.
@@ -182,7 +173,7 @@ class RSA:
         number_of_checks = 5 # Should be 20
         for i in range(number_of_checks):
             x = randint(2, n-1)
-            Witness = self.__millerRabin(x, n)
+            Witness = self.__miller_rabin(x, n)
     
             # Is x a witness? If so, n is definitely composite.
             if (Witness == True):
@@ -192,7 +183,7 @@ class RSA:
         return True
 
 
-    def __findPrime(self, lowerBound, upperBound):
+    def __find_prime(self, lowerBound, upperBound):
         
         """
         Uses probablyPrime() and a random number generator to produce a prime.
@@ -210,22 +201,22 @@ class RSA:
     
         while True:
             potential_prime = randint(lowerBound, upperBound)
-            if self.__probablyPrime(potential_prime) == True:
+            if self.__probably_prime(potential_prime) == True:
                 return potential_prime
     
     
-    def __generateRSAPrimes(self, b):
+    def __generate_rsa_primes(self, b):
         """
         Generates two b-bit primes.
         """
         
-        p = self.__findPrime(2**b, 2**(b+1)-1)
-        q = self.__findPrime(2**b, 2**(b+1)-1)
+        p = self.__find_prime(2**b, 2**(b+1)-1)
+        q = self.__find_prime(2**b, 2**(b+1)-1)
     
         return [p, q]
 
 
-    def __generateRSAEncryptionExp(self, p, q):
+    def __generate_rsa_encryption_exp(self, p, q):
         """
         Uses random number generation to produce a number coprime to (p-1)*(q-1).
         
@@ -243,10 +234,10 @@ class RSA:
     
         while True:
             e = randint(2, modulus - 1)
-            if self.__extendedGCD(e, modulus)[0] == 1:
+            if self.__extended_gcd(e, modulus)[0] == 1:
                 return e
             
-    def __generateRSADecryptionExp(self, p, q, e):
+    def __generate_rsa_decryption_exp(self, p, q, e):
         """
         Calculates the inverse of e mod (p-1)*(q-1).
     
@@ -259,7 +250,4 @@ class RSA:
         --- d = the inverse of e modulo (p-1)*(q-1).
         """
     
-        return self.__getModInverse(e, (p-1)*(q-1))
-    
-# Instantiation looks like the following   
-RSA = RSA(100)
+        return self.__get_mod_inverse(e, (p-1)*(q-1))
