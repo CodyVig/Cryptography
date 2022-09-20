@@ -173,6 +173,20 @@ def generateRSAEncryptionExp(p, q):
         if extendedGCD(e, modulus)[0] == 1:
             return e
 
+def generateRSADecryptionExp(p, q, e):
+        """
+        Calculates the inverse of e mod (p-1)*(q-1).
+    
+        Inputs:
+        --- p
+        --- q
+        --- e
+    
+        Output:
+        --- d = the inverse of e modulo (p-1)*(q-1).
+        """
+
+        return getModInverse(e, (p-1)*(q-1))
 
 def RSAEncryption(message, PublicKey):
     """Encrypts a plaintext message using RSA encryption.
