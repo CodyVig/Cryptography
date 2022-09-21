@@ -251,3 +251,33 @@ class RSA:
         """
     
         return self.__get_mod_inverse(e, (p-1)*(q-1))
+    
+
+if __name__ == "__main__":
+    rsa = RSA(1000)
+    print("\nWelcome to the RSA interface.\n\nYour public key is:\n[N, e] = ")
+    print(rsa.get_public_key())
+    use = "Y"
+    while(use.upper() == "Y"):
+        use = input("\nAre you encrypting a message or decrypting a message? (Please enter ENCRYPT or DECRYPT)\n")
+        if(use.upper() == "ENCRYPT"):
+            message = input("Enter a message to be encrypted:\n")
+            N = input("Enter your recipient's public modulus N:\n")
+            e = input("Enter your recipient's public encryption exponent e:\n")
+            keys = [int(N), int(e)]
+            encryption = rsa.encrypt(message, keys)
+            print("\n---------------------------------------------------------------------------------------\n")
+            print("Your encrypted message is the following. Send this cipher to the person from whom you received the public key.")
+            print(encryption)
+            print("\n\nNOTE: Please keep this function running until you receive a repsonse. " + 
+                  "Otherwise, your public key will change and the sender's response will be impossible to decrypt.")
+        elif (use.upper() == "DECRYPT"):
+            cipher = input("Paste the cipher text you have received.\n")
+            message = rsa.decrypt(int(cipher))
+            print("\nThe message was...\n" + message)
+        else:
+            print(use + " is not a valid response.")
+            use = ""
+            
+        use = input("Do you need to perform another encryption/decryption? [y/n]: ")
+    print("\nGoodbye!")
