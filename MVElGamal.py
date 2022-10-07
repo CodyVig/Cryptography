@@ -1,43 +1,79 @@
-### Prerequisite functions
+from random import randint
 
-# Entended GCD:
-def divisionWithRemainder(a, b):
+## TO-DO:
+## Doc strings need to be added for most functions.
+
+##
+## Requisite number theory code.
+##
+
+def division_with_remainder(a, b):
     """Long divides a/b to get [q, r] such that a = bq + r"""
 
-    r = a%b
-    q = (a - r)//b
-
-    return [q, r]
+    return [a//b, a%b]
 
 
-def extendedGCD(a, b):
+def extended_gcd(a, b):
     """Runs extended Euclidean algorithm on inputs (a, b) to find [g, u, v] such that g = gcd(a, b) and au + bv = g.
        This follows the algorithm introduced in Problem 1.12 of Hoffstein, et al."""
 
     u = 1; g = a; x = 0; y = b
 
     while(y != 0):
-        [q, t] = divisionWithRemainder(g, y)
+        [q, t] = division_with_remainder(g, y)
         s = u - q*x
         u = x; g = y; x = s; y = t
 
     v = (g - a*u) // b
     return [g, u, v]
 
-
-def getModInverse(a, p):
+def get_mod_inverse(a, p):
     """Returns the inverse of a mod p"""
 
-    [g, u, v] = extendedGCD(a, p)
+    [g, u, v] = extended_gcd(a, p)
 
     if (g != 1):
-        raise ValueError("The arguments of getModInverse are not coprime!")
+        raise ValueError("The arguments of get_mod_inverse are not coprime!")
 
     return u % p
 
-# ASCII Functions
+def get_binary(A):
+    """Returns the coefficients [A0, ..., Ar] such that A = A0*2^0 + ... + A_r*2^r"""
 
-def textToInt(w):
+    x = A; i = 0
+    binary_rep = []
+
+    while(x != 0):
+        [q, r] = division_with_remainder(x, 2)
+        binary_rep.append(r)
+        x = q
+        if(x == 0):
+            return binary_rep
+        i += 1
+
+def fast_power_small(g, A, N):
+    """Returns g^A (mod N) using the algorithm in HW 2 Problem 2(b)."""
+
+    # If exponent is negative, replace g with the inverse of g
+    if (A < 0):
+        g = get_mod_inverse(g, N)
+        A = -A
+
+    a = g; b = 1
+
+    while(A > 0):
+        if(A%2 == 1):
+            b = (b*a) % N
+
+        a = a**2 % N ; A = A//2
+
+    return b
+
+##
+## ASCII functions.
+##
+
+def text_to_int(w):
     """Takes in a string and outputs an integer satisfying the above equation."""
 
     n = 0
@@ -47,39 +83,41 @@ def textToInt(w):
 
     return n
 
-
-def intToText(n):
-    """Takes in an integer and returns its corresponding string using the ASCII dictionary without storing the base-256 expansion."""
+def int_to_text(n):
+    """
+    Takes in an integer and returns its corresponding string using
+    the ASCII dictionary without storing the base-256 expansion.
+    """
 
     text = ""
     x = n; i = 0
 
     while(x != 0):
-        [x, r] = divisionWithRemainder(x, 256)
-        text = text + chr(r)
+        [x, r] = division_with_remainder(x, 256)
+        text += chr(r)
         if(x == 0):
             return text
         i += 1
 
+##
+## Elliptic Curve functions.
+##
 
-# Elliptic Curve Functions
-
-def isElliptic(E, p):
+def is_elliptic(E, p):
     [A, B] = E
-    D = (4*A**3 + 27*B**2) %p
+    D = (4*A**3 + 27*B**2)%p
 
     if(D == 0):
         return False
     else:
         return True
 
-
-def onCurve(P, E, p):
+def on_curve(P, E, p):
 
     # Check if P is the point at infinity
     if (P == 'O'):
         # 'O' is only on *elliptic* curves
-        if isElliptic(E, p):
+        if is_elliptic(E, p):
             return True
         else:
             return False
@@ -95,8 +133,7 @@ def onCurve(P, E, p):
     else:
         return False
 
-
-def addPoints(P, Q, E, p):
+def add_points(P, Q, E, p):
     """
     Adds two points on an elliptic curve. (If one of the points is O, input as +Infinity)
 
@@ -110,11 +147,10 @@ def addPoints(P, Q, E, p):
     --- The point P + Q on E.
     """
 
-
     # Are these points on the curve?
-    if (onCurve(P, E, p) == False):
+    if (on_curve(P, E, p) == False):
         raise ValueError("First argument " + str(P) +" is not a point on E.")
-    if (onCurve(Q, E, p) == False):
+    if (on_curve(Q, E, p) == False):
         raise ValueError("Second argument " + str(Q) + " is not a point on E.")
 
     O = 'O'
@@ -140,76 +176,35 @@ def addPoints(P, Q, E, p):
         return O
     else:
         if (x1 != x2):
-            L = getModInverse((x2 - x1), p) * (y2 - y1)
+            L = get_mod_inverse((x2 - x1), p) * (y2 - y1)
         else:
-            L = getModInverse(2*y1, p) * (3*x1**2 + a)
+            L = get_mod_inverse(2*y1, p) * (3*x1**2 + a)
 
     L = L%p
     x3 = L**2 - x1 - x2
     y3 = L * (x1 - x3) - y1
 
     return [x3%p, y3%p]
-  
-  
-# Misc
 
-def fastPowerSmall(g, A, N):
-    """Returns g^A (mod N) using the algorithm in HW 2 Problem 2(b)."""
+def double_and_add_small(P, n, E, p):
 
-    # If exponent is negative, replace g with the inverse of g
-    if (A < 0):
-        g = getModInverse(g, N)
-        A = -A
+    a = P
+    nP = 'O'
 
-    a = g; b = 1
+    while(n > 0):
+        if(n%2 == 1):
+            nP = add_points(nP, a, E, p)
 
-    while(A > 0):
-        if(A%2 == 1):
-            b = (b*a) % N
+        a = add_points(a, a, E, p)
+        n = n//2
 
-        a = a**2 % N ; A = A//2
+    return nP
 
-    return b
+##
+## Prime number functions.
+##
 
-
-def getBinary(A):
-    """Returns the coefficients [A0, A1, ..., Ar] such that A = A0 + A1*2 + ... + A_r*2^r"""
-
-    x = A; i = 0
-    binary_rep = []
-
-    # We need divisionWithRemainder from HW 1:
-    def divisionWithRemainder(a, b):
-        """Long divides a/b to get [q,r] such that a = bq + r"""
-
-        r = a%b
-        q = (a - r)/b
-
-        return [q, r]
-
-    while(x != 0):
-        [q, r] = divisionWithRemainder(x, 2)
-        binary_rep.append(r)
-        x = q
-        if(x == 0):
-            return binary_rep
-        i += 1
-
-
-def getModInverse(a, p):
-    """Returns the inverse of a mod p"""
-
-    [g, u, v] = extendedGCD(a, p)
-
-    if (g != 1):
-        raise ValueError("The arguments of getModInverse are not coprime!")
-
-    return u % p
-  
-
-# Primes
-
-def millerRabin(a, n):
+def miller_rabin(a, n):
     """If a is a Miller-Rabin witness for n, return true. Else, false."""
 
     # False == Potentially prime
@@ -222,7 +217,7 @@ def millerRabin(a, n):
         k += 1
         q = q//2
 
-    x = fastPowerSmall(a, q, n)
+    x = fast_power_small(a, q, n)
 
     # Is a^m = 1 mod n? Then a is not a witness
     if (x == 1):
@@ -238,22 +233,20 @@ def millerRabin(a, n):
     # If we've made it here, the number is a witness.
     return True
 
-
-def probablyPrime(n):
+def probably_prime(n):
     number_of_checks = 20
     for i in range(number_of_checks):
-        x = ZZ.random_element(2, n-1)
-        Witness = millerRabin(x, n)
+        x = randint(2, n-1)
+        witness = miller_rabin(x, n)
 
         # Is x a witness? If so, n is definitely composite.
-        if (Witness == True):
+        if (witness == True):
             return False
 
     # If we made it here, then none of the random numbers were witnesses
     return True
 
-
-def findPrime(lowerBound, upperBound):
+def find_prime(lowerBound, upperBound):
     """Uses probablyPrime() and a random number generator to produce a prime.
 
     Inputs:
@@ -264,49 +257,69 @@ def findPrime(lowerBound, upperBound):
     --- a number p between lowerBound and upperBound which is very likely to be prime."""
 
     while True:
-        potential_prime = ZZ.random_element(lowerBound, upperBound)
-        if probablyPrime(potential_prime) == True:
+        potential_prime = randint(lowerBound, upperBound)
+        if probably_prime(potential_prime) == True:
             return potential_prime
           
-          
-### ElGamal code
+##          
+## ElGamal code.
+##
 
-def MVParameterCreation(b):
+def generate_elliptic_curve_and_point(p):
+
+    while True:
+
+        # Pick random point and random A.
+        x0 = randint(p)
+        y0 = randint(1, p)
+        A  = randint(1, p)
+
+        # Now deduce what B must be.
+        B  = (y0**2 - x0**3 - A*x0) % p
+
+        E = [A, B]
+        P = [x0, y0]
+
+        # Determine whether or not Delta = 0.
+        if (is_elliptic(E, p) == False):
+            continue
+        else:
+            return [E, P]
+
+def mv_parameter_creation(b):
 
     # First create a prime of b bits.
-    p = findPrime(2**(b), 2**(b+1))
+    p = find_prime(2**(b), 2**(b+1))
 
     P = 'O'
     while (P == 'O'):
         # Generate the parameters
-        [E, P] = generateEllipticCurveAndPoint(p)
+        [E, P] = generate_elliptic_curve_and_point(p)
 
         # Make sure P has order > 2.
-        if (addPoints(P, P, E, p) == 'O'):
+        if (add_points(P, P, E, p) == 'O'):
             P = 'O'
         else:
             return [E, P, p]
-          
-          
-def MVKeyCreation(pubParams):
+
+def mv_key_creation(pubParams):
 
     [E, P, p] = pubParams
 
     while True:
         # Choose a secret privateKey (nA in notes):
-        privateKey = ZZ.random_element(p)
+        privateKey = randint(2, p)
 
         # deduce the publicKey:
-        publicKey = doubleAndAddSmall(P, privateKey, E, p)
+        publicKey = double_and_add_small(P, privateKey, E, p)
 
         # Make sure the publicKey is useable!
         if(publicKey == 'O' or publicKey[1] == 0):
             continue
         else:
             return [privateKey, publicKey]
-          
-          
-def MVEncrypt(pubParams, m1, m2, publicKey):
+
+def mv_encrypt(pubParams, m1, m2, publicKey):
     """
     This follows the encryption algorithm discussed on page 365 of [HPS].
     """
@@ -316,13 +329,13 @@ def MVEncrypt(pubParams, m1, m2, publicKey):
 
     while True:
         # Choose a random k
-        k = ZZ.random_element(p)
+        k = randint(2, p)
 
         # R = kP
-        R = doubleAndAddSmall(P, k, E, p)
+        R = double_and_add_small(P, k, E, p)
 
         # S = kQ
-        S = doubleAndAddSmall(Q, k, E, p)
+        S = double_and_add_small(Q, k, E, p)
 
         if(R == "O" or S == "O"):
             continue
@@ -336,20 +349,19 @@ def MVEncrypt(pubParams, m1, m2, publicKey):
                 c2 = (ys * m2) % p
 
                 return [R, c1, c2]
-              
-          
-def MVDecrypt(pubParams, cipherText, privateKey):
+
+def mv_decrypt(pubParams, cipherText, privateKey):
 
     [E, P, p]   = pubParams
     [R, c1, c2] = cipherText
     n = privateKey
 
     # T = nR
-    T = doubleAndAddSmall(R, n, E, p)
+    T = double_and_add_small(R, n, E, p)
     [xt, yt] = T
 
-    xt_inverse = getModInverse(xt, p)
-    yt_inverse = getModInverse(yt, p)
+    xt_inverse = get_mod_inverse(xt, p)
+    yt_inverse = get_mod_inverse(yt, p)
 
     m1_prime = (xt_inverse * c1) % p
     m2_prime = (yt_inverse * c2) % p
