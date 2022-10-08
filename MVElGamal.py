@@ -14,8 +14,11 @@ def division_with_remainder(a, b):
 
 
 def extended_gcd(a, b):
-    """Runs extended Euclidean algorithm on inputs (a, b) to find [g, u, v] such that g = gcd(a, b) and au + bv = g.
-       This follows the algorithm introduced in Problem 1.12 of Hoffstein, et al."""
+    """
+    Runs extended Euclidean algorithm on inputs (a, b) to find [g, u, v] 
+    such that g = gcd(a, b) and au + bv = g. This follows the algorithm 
+    introduced in Problem 1.12 of Hoffstein, et al.
+    """
 
     u = 1; g = a; x = 0; y = b
 
@@ -38,7 +41,10 @@ def get_mod_inverse(a, p):
     return u % p
 
 def get_binary(A):
-    """Returns the coefficients [A0, ..., Ar] such that A = A0*2^0 + ... + A_r*2^r"""
+    """
+    Returns the coefficients [A0, ..., Ar] such that 
+    A = A0*2^0 + ... + A_r*2^r
+    """
 
     x = A; i = 0
     binary_rep = []
@@ -74,7 +80,10 @@ def fast_power_small(g, A, N):
 ##
 
 def text_to_int(w):
-    """Takes in a string and outputs an integer satisfying the above equation."""
+    """
+    Takes in a string and outputs an integer 
+    satisfying the above equation.
+    """
 
     n = 0
 
@@ -135,7 +144,8 @@ def on_curve(P, E, p):
 
 def add_points(P, Q, E, p):
     """
-    Adds two points on an elliptic curve. (If one of the points is O, input as +Infinity)
+    Adds two points on an elliptic curve. 
+    (If one of the points is O, input as +Infinity)
 
     Inputs:
     --- E: a list [a, b] of coefficients of elliptic curve y^2 = x^3 + ax + b;
@@ -254,7 +264,8 @@ def find_prime(lowerBound, upperBound):
     --- upperBound
 
     Output:
-    --- a number p between lowerBound and upperBound which is very likely to be prime."""
+    --- a number p between lowerBound and upperBound 
+        which is very likely to be prime."""
 
     while True:
         potential_prime = randint(lowerBound, upperBound)
