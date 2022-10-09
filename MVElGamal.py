@@ -42,8 +42,8 @@ def get_mod_inverse(a, p):
 
 def get_binary(A):
     """
-    Returns the coefficients [A0, ..., Ar] such that 
-    A = A0*2^0 + ... + A_r*2^r
+    Returns the coefficients [A0, ..., Ar] 
+    such that A = A0*2^0 + ... + A_r*2^r
     """
 
     x = A; i = 0
@@ -57,7 +57,7 @@ def get_binary(A):
             return binary_rep
         i += 1
 
-def fast_power_small(g, A, N):
+def fast_power(g, A, N):
     """Returns g^A (mod N) using the algorithm in HW 2 Problem 2(b)."""
 
     # If exponent is negative, replace g with the inverse of g
@@ -114,9 +114,8 @@ def int_to_text(n):
 
 def is_elliptic(E, p):
     [A, B] = E
-    D = (4*A**3 + 27*B**2)%p
 
-    if(D == 0):
+    if((4*A**3 + 27*B**2)%p == 0):
         return False
     else:
         return True
@@ -159,7 +158,7 @@ def add_points(P, Q, E, p):
 
     # Are these points on the curve?
     if (on_curve(P, E, p) == False):
-        raise ValueError("First argument " + str(P) +" is not a point on E.")
+        raise ValueError("First argument " + str(P) + " is not a point on E.")
     if (on_curve(Q, E, p) == False):
         raise ValueError("Second argument " + str(Q) + " is not a point on E.")
 
@@ -196,7 +195,7 @@ def add_points(P, Q, E, p):
 
     return [x3%p, y3%p]
 
-def double_and_add_small(P, n, E, p):
+def double_and_add(P, n, E, p):
 
     a = P
     nP = 'O'
@@ -227,7 +226,7 @@ def miller_rabin(a, n):
         k += 1
         q = q//2
 
-    x = fast_power_small(a, q, n)
+    x = fast_power(a, q, n)
 
     # Is a^m = 1 mod n? Then a is not a witness
     if (x == 1):
@@ -322,7 +321,7 @@ def mv_key_creation(pubParams):
         privateKey = randint(2, p)
 
         # deduce the publicKey:
-        publicKey = double_and_add_small(P, privateKey, E, p)
+        publicKey = double_and_add(P, privateKey, E, p)
 
         # Make sure the publicKey is useable!
         if(publicKey == 'O' or publicKey[1] == 0):
@@ -343,10 +342,10 @@ def mv_encrypt(pubParams, m1, m2, publicKey):
         k = randint(2, p)
 
         # R = kP
-        R = double_and_add_small(P, k, E, p)
+        R = double_and_add(P, k, E, p)
 
         # S = kQ
-        S = double_and_add_small(Q, k, E, p)
+        S = double_and_add(Q, k, E, p)
 
         if(R == "O" or S == "O"):
             continue
@@ -368,7 +367,7 @@ def mv_decrypt(pubParams, cipherText, privateKey):
     n = privateKey
 
     # T = nR
-    T = double_and_add_small(R, n, E, p)
+    T = double_and_add(R, n, E, p)
     [xt, yt] = T
 
     xt_inverse = get_mod_inverse(xt, p)
