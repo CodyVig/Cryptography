@@ -1,26 +1,64 @@
 class RSA:
     # __init__ runs upon instantiation and stores these attributes permanently 
     # for each object.
-    def __init__(self, b):
-        self.bit_size = b
-        self.primes = self.__generate_rsa_primes(b)
-        self.encryption_exp = self.__generate_rsa_encryption_exp(
-            self.primes[0], self.primes[1])
-        self.decryption_exp = self.__generate_rsa_decryption_exp(
-            self.primes[0], self.primes[1], self.encryption_exp)
-        
+    def __init__(self, b = 1000):
+        self._bit_size = b
+        self._primes = self.__generate_rsa_primes(b)
         
     def get_bit_size(self):
         """Returns the number of bits used to generate primes."""
-        return self.bit_size
+        return self._bit_size
     
+    def set_public_key(self, public_key = None):
+        """
+        Void method which sets self.modulus, self.encryption_exp. 
+        Call self.get_public_key to verify.
+
+        Inputs:
+        --- [optional] public_key = [N, e] : User-suplied public key.
+        """
+
+        if (public_key is not None):
+            # This means the user supplied their own key
+            self.modulus = public_key[0]
+            self.encryption_exp = public_key[1]
+            return None
+
+        # Create a key for the user
+        self.modulus = self._primes[0] * self._primes[1]
+        self.encryption_exp = self.__generate_rsa_encryption_exp(
+            self._primes[0], self._primes[1])
+        return None
+
+    def set_private_key(self, private_key = None):
+        """
+        Void method which sets self.primes, self.decryption_exp. 
+        Call self.get_private_key to verify.
+
+        Inputs:
+        --- [optional] private_key = [N, d] : User-suplied private key.
+        """
+
+        if (private_key is not None):
+            # This means the user supplied their own key
+            self.modulus = private_key[0]
+            self.decryption_exp = private_key[1]
+            return None
+
+        # Create a key for the user
+        self.modulus = self._primes[0] * self._primes[1]
+        self.decryption_exp = self.__generate_rsa_decryption_exp(
+            self._primes[0], self._primes[1], self.encryption_exp)
+        #del self.primes # Storing primes is a security flaw
+        return None
+
     def get_public_key(self):
         """
         Returns [modulus, encryption_exponent] 
         that is used by sender to encrypt messages.
         """
         
-        return [self.primes[0] * self.primes[1], self.encryption_exp]
+        return [self.modulus, self.encryption_exp]
     
     def get_private_key(self):
         """
@@ -28,23 +66,28 @@ class RSA:
         that is used by you to encrypt messages.
         """
         
-        return [self.primes[0] * self.primes[1], self.decryption_exp]
+        return [self.modulus, self.decryption_exp]
     
-    def encrypt(self, message, keys):
+    def clear_security_flaws(self):
+        """Call to delete self.primes after setting keys."""
+        del self._primes
+        return None
+
+    def encrypt(self, message, pub_key):
         """
         Encrypts a plaintext message using RSA encryption.
         
         Inputs:
-        message --- a string you wish to encrypt for transfer to another party.
-        keys    --- a list containing party's modulus and encryption_exponent.
+        message --- a string you wish to encrypt for transfer to third party.
+        pub_key --- a list containing third party [N, e].
         
         Output:
         cipher --- the encrypted message to be given to recipient.
         """
     
-        return self.__fast_power_small(self.__text_to_int(message), 
-                                       keys[1], 
-                                       keys[0])
+        return self.__fast_power(self.__text_to_int(message), 
+                                       pub_key[1], 
+                                       pub_key[0])
 
     def decrypt(self, cipher):
         """
@@ -57,8 +100,10 @@ class RSA:
         message --- a string in English.
         """
     
-        return self.__int_to_text(self.__fast_power_small(
-            cipher, self.get_private_key()[1], self.get_private_key()[0]))
+        return self.__int_to_text(self.__fast_power(
+            cipher, 
+            self.get_private_key()[1], 
+            self.get_private_key()[0]))
     
     # The following functions are needed to perform number-theoretic 
     # calculations to encrypt and decrypt.
@@ -95,7 +140,7 @@ class RSA:
     
         return u % p
 
-    def __fast_power_small(self, g, A, N):
+    def __fast_power(self, g, A, N):
         """
         Returns g^A (mod N) using a low-space 
         and low-time complexity algorithm.
@@ -157,7 +202,7 @@ class RSA:
             k += 1
             q = q//2
     
-        x = self.__fast_power_small(a, q, n)
+        x = self.__fast_power(a, q, n)
     
         # Is a^m = 1 mod n? Then a is not a witness
         if (x == 1):
@@ -195,7 +240,6 @@ class RSA:
 
 
     def __find_prime(self, lowerBound, upperBound):
-        
         """
         Uses probablyPrime() and a random number generator to produce a prime.
         
@@ -265,36 +309,12 @@ class RSA:
         return self.__get_mod_inverse(e, (p-1)*(q-1))
     
 if __name__ == "__main__":
-    rsa = RSA(1000)
-    print("\nYour public key is:\n[N, e] = ")
-    print(rsa.get_public_key())
-    use = "Y"
-    while(use.upper() == "Y"):
-        use = input("\nAre you encrypting a message or decrypting a message?"
-                    + " (Please enter ENCRYPT or DECRYPT)\n")
-        if(use.upper() == "ENCRYPT"):
-            message = input("Enter a message to be encrypted:\n")
-            N = input("Enter your recipient's public modulus N:\n")
-            e = input("Enter your recipient's public encryption exponent e:\n")
-            keys = [int(N), int(e)]
-            encryption = rsa.encrypt(message, keys)
-            print("\n---------------------------------------------"
-                  + "-------------------------------------------\n")
-            print("Your encrypted message is the following. Send this cipher "
-                  + "to the person from whom you received the public key.")
-            print(encryption)
-            print("\n\nNOTE: Please keep this function running until you "
-                  + "receive a repsonse. Otherwise, your public key will "
-                  + "change and the sender's response will be impossible "
-                  + "to decrypt.")
-        elif (use.upper() == "DECRYPT"):
-            cipher = input("Paste the cipher text you have received.\n")
-            message = rsa.decrypt(int(cipher))
-            print("\nThe message was...\n" + message)
-        else:
-            print(use + " is not a valid response.")
-            use = ""
-            
-        use = input("Do you need to perform another encryption/decryption? "
-                    + "[y/n]: ")
-    print("\nGoodbye!")
+    rsa = RSA(100)
+    print("\nPlease use rsa.set_private_key() and rsa.set_public_key() to set"
+        + " a private key before use. You may pass in an optional argument" 
+        + " private_key = [N, d] into rsa.set_private_key() and"
+        + " public_key = [N, e] into rsa.set_public_key()"
+        + " if you have your own keys. If not, keys will be created for you.")
+    print("\nOnce you have set your public and private keys,"
+        + " run rsa.clear_security_flaws() to delete unnecessary information"
+        + " that may be used to break your RSA security.\n")
