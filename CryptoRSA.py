@@ -1,9 +1,12 @@
 class RSA:
-    # __init__ runs upon instantiation and stores these attributes permanently 
+    # __init__ runs upon instantiation and stores these attributes permanently
     # for each object.
     def __init__(self, b = 1000):
         self._bit_size = b
         self._primes = self.__generate_rsa_primes(b)
+        self.modulus = self._primes[0] * self._primes[1]
+        self.encryption_exp = 0     # To be reassigned later.
+        self.decryption_exp = 0     # To be reassigned later.
         
     def get_bit_size(self):
         """Returns the number of bits used to generate primes."""
@@ -25,7 +28,6 @@ class RSA:
             return None
 
         # Create a key for the user
-        self.modulus = self._primes[0] * self._primes[1]
         self.encryption_exp = self.__generate_rsa_encryption_exp(
             self._primes[0], self._primes[1])
         return None
@@ -46,7 +48,6 @@ class RSA:
             return None
 
         # Create a key for the user
-        self.modulus = self._primes[0] * self._primes[1]
         self.decryption_exp = self.__generate_rsa_decryption_exp(
             self._primes[0], self._primes[1], self.encryption_exp)
         #del self.primes # Storing primes is a security flaw
@@ -86,8 +87,8 @@ class RSA:
         """
     
         return self.__fast_power(self.__text_to_int(message), 
-                                       pub_key[1], 
-                                       pub_key[0])
+                                pub_key[1], 
+                                pub_key[0])
 
     def decrypt(self, cipher):
         """
@@ -113,8 +114,8 @@ class RSA:
     
     def __extended_gcd(self, a, b):
         """ 
-        Runs extended Euclidean algorithm on inputs (a, b) to find [g, u, v] 
-        such that g = gcd(a, b) and au + bv = g. This follows the algorithm 
+        Runs extended Euclidean algorithm on inputs (a, b) to find [g, u, v]
+        such that g = gcd(a, b) and au + bv = g. This follows the algorithm
         introduced in Problem 1.12 of Hoffstein, et al.
         """
     
@@ -136,7 +137,7 @@ class RSA:
         [g, u, v] = self.__extended_gcd(a, p)
     
         if (g != 1):
-            raise ValueError("The arguments of getModInverse are not coprime!")
+            raise ValueError("Arguments of get_mod_inverse are not coprime!")
     
         return u % p
 
@@ -151,19 +152,21 @@ class RSA:
             g = self.__get_mod_inverse(self, g, N)
             A = -A
     
-        a = g; b = 1
+        a = g
+        b = 1
     
         while(A > 0):
             if(A%2 == 1):
                 b = (b*a) % N
     
-            a = a**2 % N ; A = A//2
+            a = a**2 % N
+            A = A//2
     
         return b
     
     def __text_to_int(self, w):
         """
-        Takes in a string and outputs an integer satisfying the above equation.
+        Takes in a string and returns an integer using the ASCII dictionary.
         """
         n = 0
         for i in range(len(w)):
@@ -174,7 +177,7 @@ class RSA:
     def __int_to_text(self, n):
         """
         Takes in an integer and returns its corresponding string using the 
-        ASCII dictionary without storing the base-256 expansion.
+        ASCII dictionary without storing a base-256 expansion.
         """
     
         text = ""
@@ -182,18 +185,19 @@ class RSA:
     
         while(x != 0):
             [x, r] = self.__division_with_remainder(x, 256)
-            text = text + chr(r)
+            text += chr(r)
             if(x == 0):
                 return text
             i += 1
             
     def __miller_rabin(self, a, n):
         """
-        If a is a Miller-Rabin witness for n, return true. Else, false.
+        If a is a Miller-Rabin witness for n, return True. Else, False.
+        This is used to probabilistically generate prime numbers.
         """
     
         # False == Potentially prime
-        # True  == Miller-Rabin Witness ---> Definitely composite
+        # True  == Miller-Rabin Witness -> Definitely composite
     
         # Write n-1 = 2^k * q where q is odd.
         k = 0
@@ -210,7 +214,7 @@ class RSA:
     
         power_of_x = x
         for i in range(k):
-            # Is this -1 ---> p-1 mod n? If so, not a witness
+            # Is this p-1 mod n? If so, not a witness
             if (power_of_x == n-1):
                 return False
             power_of_x = (power_of_x**2) % n
@@ -226,7 +230,7 @@ class RSA:
         
         from random import randint
         
-        number_of_checks = 5 # Should be 20
+        number_of_checks = 20
         for i in range(number_of_checks):
             x = randint(2, n-1)
             Witness = self.__miller_rabin(x, n)
@@ -236,27 +240,29 @@ class RSA:
                 return False
     
         # If we made it here, then none of the random numbers were witnesses
+        # in which case, n is very likely to be prime.
         return True
 
 
-    def __find_prime(self, lowerBound, upperBound):
+    def __find_prime(self, lower_bound, upper_bound):
         """
-        Uses probablyPrime() and a random number generator to produce a prime.
+        Uses probably_prime and a random number generator to produce a prime.
         
         Inputs:
-        --- lowerBound
-        --- upperBound
+        --- lower_bound
+        --- upper_bound
         
         Output:
-        --- a number p between lowerBound and upperBound which is very likely 
+        --- a number between lower_bound and upper_bound which is very likely
             to be prime.
         """
         
+        # Sage code used ZZ.random_element(). Is randint equivalent?
         from random import randint
     
         while True:
-            potential_prime = randint(lowerBound, upperBound)
-            if self.__probably_prime(potential_prime) == True:
+            potential_prime = randint(lower_bound, upper_bound)
+            if self.__probably_prime(potential_prime):
                 return potential_prime
     
     
@@ -284,6 +290,7 @@ class RSA:
         --- a number e such that gcd(e, (p-1)*(q-1)) = 1.
         """
         
+        # Sage code used ZZ.random_element(). Is randint equivalent?
         from random import randint
         
         modulus = (p-1) * (q-1)
@@ -309,12 +316,24 @@ class RSA:
         return self.__get_mod_inverse(e, (p-1)*(q-1))
     
 if __name__ == "__main__":
-    rsa = RSA(100)
-    print("\nPlease use rsa.set_private_key() and rsa.set_public_key() to set"
-        + " a private key before use. You may pass in an optional argument" 
-        + " private_key = [N, d] into rsa.set_private_key() and"
-        + " public_key = [N, e] into rsa.set_public_key()"
-        + " if you have your own keys. If not, keys will be created for you.")
-    print("\nOnce you have set your public and private keys,"
-        + " run rsa.clear_security_flaws() to delete unnecessary information"
-        + " that may be used to break your RSA security.\n")
+    # This is a bad if __name__ == "__main__", 
+    # since the terminal is not interactive.
+    # Should I just paste my old code?
+    rsa = RSA(1000)
+
+    # Generate keys for the user.
+    rsa.set_public_key()
+    rsa.set_private_key()
+    rsa.clear_security_flaws()
+
+    # Store the keys.
+    prv_key = rsa.get_private_key()
+    pub_key = rsa.get_public_key()
+
+    print("Your public key [N, e] is:")
+    print(pub_key)
+    print("\nYour private key [N, d] is:")
+    print(prv_key)
+    print("\nSave these numbers, and keep your private key hidden. ")
+    print("You can use these keys to encrypt and decrypt " 
+        + str(rsa.get_bit_size()) + "-bit messages to another user.")
