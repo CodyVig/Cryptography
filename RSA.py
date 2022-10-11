@@ -316,9 +316,6 @@ class RSA:
         return self.__get_mod_inverse(e, (p-1)*(q-1))
     
 if __name__ == "__main__":
-    # This is a bad if __name__ == "__main__", 
-    # since the terminal is not interactive.
-    # Should I just paste my old code?
     rsa = RSA(1000)
 
     # Generate keys for the user.
