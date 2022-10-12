@@ -1,22 +1,64 @@
+from random import randint
+
 class MVElGamal:
 
     # TO DO: 
-    # 1. Create public methods for user to get and set keys, params.
-    # 2. Initialize pub_params, public_key, and private_key in __init__().
-    # 3. Create a working if __name__ == "__main__".
-    # 4. Add doc strings to all methods.
+    # 1. Write code to take in a message m from the user, deduce whether or
+    #    not that message is fewer than b bits, and decompose the message
+    #    into [m1, m2] for MVElGamal encryption.
+    # 2. Write tests for encryption and decryption.
+    # 3. Add doc strings to all methods.
 
-    def __init__(self):
-        self.pub_params = [[0, 0], [0, 0], 0]
-        self.public_key = [0, 0]
-        self.private_key = 0
+    def __init__(self, b = 512):
+        self._bit_size = b
+        self._pub_params = [[0, 0], [0, 0], 0]
+        self._public_key = [0, 0]
+        self._private_key = 0
 
-    def mv_encrypt(self, pub_params, m1, m2, public_key):
+    def set_public_parameters(self, pub_params = None):
+        
+        if (pub_params is not None):
+            # The user supplied their own public parameters
+            self._pub_params = pub_params
+            return None
+        # The user did not supply parameters, so we create them here.
+        self._pub_params = self.__mv_parameter_creation(self._bit_size)
+        return None
+
+    def set_keys(self):
+        """Call this method if you do not have keys of your own."""
+        keys = self.__mv_key_creation(self._pub_params)
+        self._private_key = keys[0]
+        self._public_key = keys[1]
+        return None
+
+    def set_public_key(self, public_key):
+        """Call this method if you have a public key of your own."""
+        self._public_key = public_key
+        return None
+    
+    def set_private_key(self, private_key):
+        """Call this method if you have a private key of your own."""
+        self._private_key = private_key
+        return None
+
+    def get_bit_size(self):
+        return self._bit_size
+
+    def get_public_parameters(self):
+        return self._pub_params
+
+    def get_public_key(self):
+        return self._public_key
+    
+    def get_private_key(self):
+        return self._private_key
+
+    def encrypt(self, pub_params, m1, m2, public_key):
         """
         This follows the encryption algorithm discussed on page 365 of [HPS].
         """
-
-        from random import randint
+        
         [E, P, p] = pub_params
         Q = public_key
 
@@ -43,7 +85,7 @@ class MVElGamal:
 
                     return [R, c1, c2]
 
-    def mv_decrypt(self, pub_params, cipher_text, private_key):
+    def decrypt(self, pub_params, cipher_text, private_key):
 
         [E, P, p]   = pub_params
         [R, c1, c2] = cipher_text
@@ -305,7 +347,6 @@ class MVElGamal:
         return True
 
     def __probably_prime(self, n):
-        from random import randint
         number_of_checks = 20
         for i in range(number_of_checks):
             x = randint(2, n-1)
@@ -329,7 +370,6 @@ class MVElGamal:
         --- a number p between lowerBound and upperBound 
             which is very likely to be prime."""
 
-        from random import randint
         while True:
             potential_prime = randint(lowerBound, upperBound)
             if self.__probably_prime(potential_prime):
@@ -341,11 +381,10 @@ class MVElGamal:
 
     def __generate_elliptic_curve_and_point(self, p):
 
-        from random import randint
         while True:
 
             # Pick random point and random A.
-            x0 = randint(p)
+            x0 = randint(0, p)
             y0 = randint(1, p)
             A  = randint(1, p)
 
@@ -379,7 +418,6 @@ class MVElGamal:
 
     def __mv_key_creation(self, pub_params):
 
-        from random import randint
         [E, P, p] = pub_params
 
         while True:
@@ -396,4 +434,29 @@ class MVElGamal:
                 return [private_key, public_key]
 
 if __name__ == "__main__":
-    print("Program works when called from source.")
+    mv_el_gamal = MVElGamal()
+
+    # Generate parameters and keys for the user.
+    mv_el_gamal.set_public_parameters()
+    mv_el_gamal.set_keys()
+
+    # Store the keys.
+    pub_params = mv_el_gamal.get_public_parameters()
+    prv_key = mv_el_gamal.get_private_key()
+    pub_key = mv_el_gamal.get_public_key()
+
+    print("The public parameters [E, P, p] are:")
+    print(pub_params)
+    print("\nYour public key is:")
+    print(pub_key)
+    print("\nYour private key is:")
+    print(prv_key)
+    print("\nE = [A, B] encodes an elliptic curve y^2 = x^3 + Ax + B, "
+        + "P = [x, y] is a point (x, y) on E, and p is a "
+        + str(mv_el_gamal.get_bit_size()) + "-bit prime number.")
+    print("\nYour public key is a point Q, not equal to P, "
+        + "on the elliptic curve E. Your private key is an integer "
+        + "n such that Q = nP via elliptic curve addition.")
+    print("\nSave these numbers, and keep your private key hidden. ")
+    print("You can use these keys to encrypt and decrypt " 
+        + str(mv_el_gamal.get_bit_size()) + "-bit messages to another user.")
