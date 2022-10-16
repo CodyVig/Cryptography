@@ -1,4 +1,9 @@
 class RSA:
+
+    # To-Do:
+    # 1. Make a set_keys() method that sets the keys if the user does not
+    #    supply keys themselves. (See MVElGamal.py)
+
     # __init__ runs upon instantiation and stores these attributes permanently
     # for each object.
     def __init__(self, b = 1000):
