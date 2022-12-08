@@ -30,13 +30,14 @@ class MVElGamal:
         self._bit_size = bit_size
         if public_key is not None and private_key is not None:
             self.set_public_parameters(public_parameters)
-            self.set_keys(public_key, private_key)
+            self.__set_keys(public_key, private_key)
         elif public_key is not None or private_key is not None:
             raise ValueError(
                 "Either both public_key and private_key must be specified, "
                 + "or neither should be. You cannot pass only one."
             )
         else:
+            self.set_public_parameters()
             self.__set_keys()
 
     def set_public_parameters(
@@ -53,10 +54,9 @@ class MVElGamal:
         """
 
         if public_parameters is not None:
-            # The user supplied their own public parameters
             self._public_parameters = public_parameters
             return None
-        # The user did not supply parameters, so we create them here.
+
         self._public_parameters = self.__mv_parameter_creation(self._bit_size)
         return None
 
@@ -103,20 +103,20 @@ class MVElGamal:
 
     def encrypt(
         self,
-        public_parameters: list[int | list[int]],
         message: str,
+        public_parameters: list[int | list[int]],
         public_key: list[int],
     ) -> list[int | list[int]]:
         """
         Encrypts a plaintext message using MV ElGamal encryption.
 
-        :param public_parameters: the source's public paramters [E, P, p].
         :param message: a string you wish to encrypt.
+        :param public_parameters: the source's public paramters [E, P, p].
         :param public_key: a list containing source's public key P = [X, Y].
         :return: the encrypted message to be given to source.
         """
 
-        if ~self.__message_length_ok(message):
+        if not self.__message_length_ok(message):
             raise ValueError("Your message is too long.")
 
         m1 = message[0 : len(message) // 2]
@@ -126,13 +126,8 @@ class MVElGamal:
         Q = public_key
 
         while True:
-            # Choose a random k
             k = randint(2, p)
-
-            # R = kP
             R = nt.double_and_add(P, k, E, p)
-
-            # S = kQ
             S = nt.double_and_add(Q, k, E, p)
 
             if R == "O" or S == "O":
@@ -142,15 +137,12 @@ class MVElGamal:
                 if xs == 0 or ys == 0:
                     continue
                 else:
-
-                    c1 = (xs * m1) % p
-                    c2 = (ys * m2) % p
-
+                    c1 = (xs * nt.text_to_int(m1)) % p
+                    c2 = (ys * nt.text_to_int(m2)) % p
                     return [R, c1, c2]
 
     def decrypt(
         self,
-        public_parameters: list[int | list[int]],
         cipher_text: list[int | list[int]],
     ) -> str:
         """
@@ -161,12 +153,11 @@ class MVElGamal:
         :return: a string in English.
         """
 
-        [E, P, p] = public_parameters
+        [E, P, p] = self.get_public_parameters()
         [R, c1, c2] = cipher_text
         n = self._private_key
 
-        T = nt.double_and_add(R, n, E, p)
-        [xt, yt] = T
+        [xt, yt] = nt.double_and_add(R, n, E, p)
 
         xt_inverse = nt.get_mod_inverse(xt, p)
         yt_inverse = nt.get_mod_inverse(yt, p)
@@ -174,11 +165,11 @@ class MVElGamal:
         m1_prime = (xt_inverse * c1) % p
         m2_prime = (yt_inverse * c2) % p
 
-        return m1_prime + m2_prime
+        return nt.int_to_text(m1_prime) + nt.int_to_text(m2_prime)
 
     def __message_length_ok(self, message: str) -> bool:
         """
-        Checks to see if the message to be encrypted is fewer than b bits.\
+        Checks to see if the message to be encrypted is fewer than b bits.
         """
 
         return nt.text_to_int(message) < 2 ** (self._bit_size + 1) - 1
@@ -190,7 +181,6 @@ class MVElGamal:
         Generates an elliptic curve E = [A, B] where y^2 = x^3 + Ax + B modulo
         `prime` together with a point P = [X, Y] on E. These are part of the
         public parameters.
-
         """
 
         while True:
