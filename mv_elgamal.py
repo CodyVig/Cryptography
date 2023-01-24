@@ -174,9 +174,7 @@ class MVElGamal:
 
         return nt.text_to_int(message) < 2 ** (self._bit_size + 1) - 1
 
-    def __generate_elliptic_curve_and_point(
-        self, prime: int
-    ) -> list[list[int]]:
+    def __generate_elliptic_curve_and_point(self, prime: int) -> list[list[int]]:
         """
         Generates an elliptic curve E = [A, B] where y^2 = x^3 + Ax + B modulo
         `prime` together with a point P = [X, Y] on E. These are part of the
@@ -244,26 +242,22 @@ class MVElGamal:
 
 
 if __name__ == "__main__":
-    mv_el_gamal = MVElGamal()
 
-    # Generate parameters and keys for the user.
-    mv_el_gamal.set_public_parameters()
-    mv_el_gamal.set_keys()
+    mv_el_gamal = MVElGamal(bit_size=512)
 
-    # Store the keys.
-    pub_params = mv_el_gamal.get_public_parameters()
     prv_key = mv_el_gamal.get_private_key()
     pub_key = mv_el_gamal.get_public_key()
+    pparams = mv_el_gamal.get_public_parameters()
 
     print("The public parameters [E, P, p] are:")
-    print(pub_params)
+    print(pparams)
     print("\nYour public key is:")
     print(pub_key)
     print("\nYour private key is:")
     print(prv_key)
     print(
-        "\nE = [A, B] encodes an elliptic curve y^2 = x^3 + Ax + B, "
-        + "P = [x, y] is a point (x, y) on E, and p is a "
+        "\n* E = [A, B] encodes an elliptic curve y^2 = x^3 + Ax + B, "
+        + "\n* P = [x, y] is a point (x, y) on E, \n* p is a "
         + str(mv_el_gamal.get_bit_size())
         + "-bit prime number."
     )
@@ -274,7 +268,7 @@ if __name__ == "__main__":
     )
     print("\nSave these numbers, and keep your private key hidden. ")
     print(
-        "You can use these keys to encrypt and decrypt "
+        "\nYou can use these keys to encrypt and decrypt "
         + str(mv_el_gamal.get_bit_size())
         + "-bit messages to another user."
     )
