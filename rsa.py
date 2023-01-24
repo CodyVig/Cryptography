@@ -108,9 +108,7 @@ class RSA:
         """
 
         return nt.int_to_text(
-            nt.fast_power(
-                cipher, self.get_private_key()[1], self.get_private_key()[0]
-            )
+            nt.fast_power(cipher, self.get_private_key()[1], self.get_private_key()[0])
         )
 
     def __clear_security_flaws(self) -> None:

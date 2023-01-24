@@ -242,40 +242,22 @@ class MVElGamal:
 
 
 if __name__ == "__main__":
-    user_has_keys = input("Do you already have keys and public parameters? [y/n] ")
-    if user_has_keys:
-        bit_size = (input("Enter the bit size of your primes: "),)
-        public_parameters = (
-            input("Enter your public parameters as a list [E, P, p]: "),
-        )
-        public_key = (input("Enter your public key as a list [x, y]: "),)
-        private_key = (input("Enter your private key: "),)
-    else:
-        bit_size = (None,)
-        public_parameters = None
-        public_key = (None,)
-        private_key = (None,)
 
-    mv_el_gamal = MVElGamal(
-        bit_size=bit_size,
-        public_parameters=public_parameters,
-        public_key=public_key,
-        private_key=private_key,
-    )
+    mv_el_gamal = MVElGamal(bit_size=512)
 
-    # Store the keys.
     prv_key = mv_el_gamal.get_private_key()
     pub_key = mv_el_gamal.get_public_key()
+    pparams = mv_el_gamal.get_public_parameters()
 
     print("The public parameters [E, P, p] are:")
-    print(public_parameters)
+    print(pparams)
     print("\nYour public key is:")
     print(pub_key)
     print("\nYour private key is:")
     print(prv_key)
     print(
-        "\nE = [A, B] encodes an elliptic curve y^2 = x^3 + Ax + B, "
-        + "P = [x, y] is a point (x, y) on E, and p is a "
+        "\n* E = [A, B] encodes an elliptic curve y^2 = x^3 + Ax + B, "
+        + "\n* P = [x, y] is a point (x, y) on E, \n* p is a "
         + str(mv_el_gamal.get_bit_size())
         + "-bit prime number."
     )
@@ -286,7 +268,7 @@ if __name__ == "__main__":
     )
     print("\nSave these numbers, and keep your private key hidden. ")
     print(
-        "You can use these keys to encrypt and decrypt "
+        "\nYou can use these keys to encrypt and decrypt "
         + str(mv_el_gamal.get_bit_size())
         + "-bit messages to another user."
     )
