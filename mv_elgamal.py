@@ -174,9 +174,7 @@ class MVElGamal:
 
         return nt.text_to_int(message) < 2 ** (self._bit_size + 1) - 1
 
-    def __generate_elliptic_curve_and_point(
-        self, prime: int
-    ) -> list[list[int]]:
+    def __generate_elliptic_curve_and_point(self, prime: int) -> list[list[int]]:
         """
         Generates an elliptic curve E = [A, B] where y^2 = x^3 + Ax + B modulo
         `prime` together with a point P = [X, Y] on E. These are part of the
@@ -244,19 +242,33 @@ class MVElGamal:
 
 
 if __name__ == "__main__":
-    mv_el_gamal = MVElGamal()
+    user_has_keys = input("Do you already have keys and public parameters? [y/n] ")
+    if user_has_keys:
+        bit_size = (input("Enter the bit size of your primes: "),)
+        public_parameters = (
+            input("Enter your public parameters as a list [E, P, p]: "),
+        )
+        public_key = (input("Enter your public key as a list [x, y]: "),)
+        private_key = (input("Enter your private key: "),)
+    else:
+        bit_size = (None,)
+        public_parameters = None
+        public_key = (None,)
+        private_key = (None,)
 
-    # Generate parameters and keys for the user.
-    mv_el_gamal.set_public_parameters()
-    mv_el_gamal.set_keys()
+    mv_el_gamal = MVElGamal(
+        bit_size=bit_size,
+        public_parameters=public_parameters,
+        public_key=public_key,
+        private_key=private_key,
+    )
 
     # Store the keys.
-    pub_params = mv_el_gamal.get_public_parameters()
     prv_key = mv_el_gamal.get_private_key()
     pub_key = mv_el_gamal.get_public_key()
 
     print("The public parameters [E, P, p] are:")
-    print(pub_params)
+    print(public_parameters)
     print("\nYour public key is:")
     print(pub_key)
     print("\nYour private key is:")
