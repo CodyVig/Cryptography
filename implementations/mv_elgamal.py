@@ -3,7 +3,7 @@ Base class for MV ElGamal crypotsystem.
 """
 
 from random import randint
-import number_theory as nt
+import implementations.number_theory as nt
 
 
 class MVElGamal:
@@ -30,7 +30,7 @@ class MVElGamal:
         self._bit_size = bit_size
         if public_key is not None and private_key is not None:
             self.set_public_parameters(public_parameters)
-            self.__set_keys(public_key, private_key)
+            self._set_keys(public_key, private_key)
         elif public_key is not None or private_key is not None:
             raise ValueError(
                 "Either both public_key and private_key must be specified, "
@@ -38,7 +38,7 @@ class MVElGamal:
             )
         else:
             self.set_public_parameters()
-            self.__set_keys()
+            self._set_keys()
 
     def set_public_parameters(
         self, public_parameters: list[int | list[int]] = None
@@ -57,12 +57,12 @@ class MVElGamal:
             self._public_parameters = public_parameters
             return None
 
-        self._public_parameters = self.__mv_parameter_creation(self._bit_size)
+        self._public_parameters = self._mv_parameter_creation(self._bit_size)
         return None
 
-    def __set_keys(self) -> None:
+    def _set_keys(self) -> None:
         """Randomly generates a public and private key if none is supplied."""
-        keys = self.__mv_key_creation(self._public_parameters)
+        keys = self._mv_key_creation(self._public_parameters)
         self._private_key: list[int] = keys[0]
         self._public_key: int = keys[1]
         return None
@@ -116,7 +116,7 @@ class MVElGamal:
         :return: the encrypted message to be given to source.
         """
 
-        if not self.__message_length_ok(message):
+        if not self._message_length_ok(message):
             raise ValueError("Your message is too long.")
 
         m1 = message[0 : len(message) // 2]
@@ -148,7 +148,6 @@ class MVElGamal:
         """
         Decrypts a ciphertext message using MV ElGamal decryption.
 
-        :param public_parameters: the source's public paramters [E, P, p].
         :param cipher_text: encrypted ciphertext received from sender.
         :return: a string in English.
         """
@@ -167,14 +166,14 @@ class MVElGamal:
 
         return nt.int_to_text(m1_prime) + nt.int_to_text(m2_prime)
 
-    def __message_length_ok(self, message: str) -> bool:
+    def _message_length_ok(self, message: str) -> bool:
         """
         Checks to see if the message to be encrypted is fewer than b bits.
         """
 
         return nt.text_to_int(message) < 2 ** (self._bit_size + 1) - 1
 
-    def __generate_elliptic_curve_and_point(self, prime: int) -> list[list[int]]:
+    def _generate_elliptic_curve_and_point(self, prime: int) -> list[list[int]]:
         """
         Generates an elliptic curve E = [A, B] where y^2 = x^3 + Ax + B modulo
         `prime` together with a point P = [X, Y] on E. These are part of the
@@ -199,7 +198,7 @@ class MVElGamal:
             else:
                 return [E, P]
 
-    def __mv_parameter_creation(self, bit_size: int) -> list[int | list[int]]:
+    def _mv_parameter_creation(self, bit_size: int) -> list[int | list[int]]:
         """
         Generates `bit_size` bit public_parameters for MV ElGamal cryptosystem.
         """
@@ -210,7 +209,7 @@ class MVElGamal:
         P = "O"
         while P == "O":
             # Generate the parameters
-            [E, P] = self.__generate_elliptic_curve_and_point(p)
+            [E, P] = self._generate_elliptic_curve_and_point(p)
 
             # Make sure P has order > 2.
             if nt.add_points(P, P, E, p) == "O":
@@ -218,7 +217,7 @@ class MVElGamal:
             else:
                 return [E, P, p]
 
-    def __mv_key_creation(
+    def _mv_key_creation(
         self, public_parameters: list[int | list[int]]
     ) -> list[int | list[int]]:
         """
