@@ -3,7 +3,7 @@ Base class for RSA cryptosystem.
 """
 
 from random import randint
-import number_theory as nt
+import implementations.number_theory as nt
 
 
 class RSA:
@@ -23,13 +23,13 @@ class RSA:
         if keys is not None:
             self.reset_public_key(keys[0])
             self.reset_private_key(keys[1])
-            self.__clear_security_flaws()
+            self._clear_security_flaws()
         else:
-            self._primes: list[int] = self.__generate_rsa_primes(bit_size)
+            self._primes: list[int] = self._generate_rsa_primes(bit_size)
             self.modulus: int = self._primes[0] * self._primes[1]
             self.reset_public_key()
             self.reset_private_key()
-            self.__clear_security_flaws()
+            self._clear_security_flaws()
 
     def get_bit_size(self) -> int:
         """Returns the number of bits used to generate primes."""
@@ -48,7 +48,7 @@ class RSA:
             self.encryption_exp = public_key[1]
             return None
 
-        self.encryption_exp = self.__generate_rsa_encryption_exp(
+        self.encryption_exp = self._generate_rsa_encryption_exp(
             self._primes[0], self._primes[1]
         )
         return None
@@ -67,7 +67,7 @@ class RSA:
             self.decryption_exp = private_key[1]
             return None
 
-        self.decryption_exp = self.__generate_rsa_decryption_exp(
+        self.decryption_exp = self._generate_rsa_decryption_exp(
             self._primes[0], self._primes[1], self.encryption_exp
         )
         return None
@@ -111,12 +111,12 @@ class RSA:
             nt.fast_power(cipher, self.get_private_key()[1], self.get_private_key()[0])
         )
 
-    def __clear_security_flaws(self) -> None:
+    def _clear_security_flaws(self) -> None:
         """Call to delete `self.primes` after setting keys."""
         del self._primes
         return None
 
-    def __generate_rsa_primes(self, bit_size: int) -> list[int]:
+    def _generate_rsa_primes(self, bit_size: int) -> list[int]:
         """
         Generates two b-bit primes.
 
@@ -131,7 +131,7 @@ class RSA:
 
         return [p, q]
 
-    def __generate_rsa_encryption_exp(self, p: int, q: int) -> int:
+    def _generate_rsa_encryption_exp(self, p: int, q: int) -> int:
         """
         Uses random number generation to produce
         a number coprime to (p-1) * (q-1).
@@ -148,7 +148,7 @@ class RSA:
             if nt.extended_gcd(e, modulus)[0] == 1:
                 return e
 
-    def __generate_rsa_decryption_exp(self, p: int, q: int, e: int) -> int:
+    def _generate_rsa_decryption_exp(self, p: int, q: int, e: int) -> int:
         """
         Calculates the inverse of e mod (p-1) * (q-1).
 
